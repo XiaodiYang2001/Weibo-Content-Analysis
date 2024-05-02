@@ -315,7 +315,7 @@ python run_spider.py tweet_by_user_id
 ### 基于关键词的微博采集
 
 ```bash
-python run_spider.py tweet_by_keyword
+python weibospider/run_spider.py tweet_by_keyword
 ```
 
 ```json
