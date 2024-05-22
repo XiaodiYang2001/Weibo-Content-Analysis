@@ -49,8 +49,12 @@
 ### 拉取&&安装
 
 ```bash
-git clone https://github.com/nghuyong/WeiboSpider.git --depth 1 
+git clone https://github.com/nghuyong/WeiboSpider.git --depth 1
 cd WeiboSpider
+pip install -r requirements.txt
+
+git clone https://github.com/XiaodiYang2001/Weibo-Content-Analysis.git --depth 1
+cd Weibo-Content-Analysis
 pip install -r requirements.txt
 ```
 
