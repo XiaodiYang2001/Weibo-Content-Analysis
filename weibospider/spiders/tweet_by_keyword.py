@@ -23,7 +23,7 @@ class TweetSpiderByKeyword(Spider):
         爬虫入口
         """
         # 这里keywords可替换成实际待采集的数据
-        keywords = ['坠落的审判首映', '坠落的审判北大', '坠落的审判北大首映', '坠落的审判北大首映礼']
+        keywords = ['坠落的审判首映', '坠落的审判北大', '北大首映']
         # 这里的时间可替换成实际需要的时间段
         start_time = datetime.datetime(year=2024, month=3, day=24, hour=21)
         end_time = datetime.datetime(year=2024, month=3, day=29, hour=21)
