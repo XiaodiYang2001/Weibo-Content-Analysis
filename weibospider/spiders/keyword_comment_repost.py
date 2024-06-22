@@ -88,7 +88,7 @@ class TweetSpiderByKeyword(Spider):
             reposts_url = f"https://weibo.com/ajax/statuses/repostTimeline?id={mid}&page=1&moduleID=feed&count=10"
             yield Request(reposts_url, callback=self.parse_reposts, meta={'item': item, 'page_num': 1, 'mid': mid}, priority=30)
             # 构造点赞信息的请求
-             attitudes_url = f"https://weibo.com/ajax/statuses/attitudes?id={mid}&page=1&count=20"
+            attitudes_url = f"https://weibo.com/ajax/statuses/attitudes?id={mid}&page=1&count=20"
             yield Request(attitudes_url, callback=self.parse_attitudes, meta={'item': item, 'page_num': 1, 'mid': mid}, priority=30)
         else:
             self.logger.warning(f"No 'mid' found in tweet data. URL: {response.url}")
