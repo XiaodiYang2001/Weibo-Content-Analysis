@@ -55,7 +55,7 @@ pip install -r requirements.txt
 
 rm -rf Weibo-Content-Analysis
 git clone https://github.com/XiaodiYang2001/Weibo-Content-Analysis.git --depth 1
-cd ～/Desktop/Weibo-Content-Analysis
+cd ~/Desktop/Weibo-Content-Analysis
 pip install -r requirements.txt
 pip install --upgrade scrapy twisted
 ```
