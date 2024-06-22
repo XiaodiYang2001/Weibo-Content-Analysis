@@ -78,17 +78,22 @@ class TweetSpiderByKeyword(Spider):
         else:
             yield item
 
-        # 抓取评论信息
-        comments_url = f"https://weibo.com/ajax/statuses/buildComments?is_reload=1&id={mid}&is_show_bulletin=2&is_mix=0&count=20"
-        yield Request(comments_url, callback=self.parse_comments, meta={'item': item, 'source_url': comments_url}, priority=30)
+        # 获取微博的唯一标识符 mid
+        mid = data.get('mid')  # 假设微博数据中的唯一标识符为 'mid'
+            if mid:
+            # 构造评论信息的请求
+            comments_url = f"https://weibo.com/ajax/statuses/buildComments?is_reload=1&id={mid}&is_show_bulletin=2&is_mix=0&count=20"
+            yield Request(comments_url, callback=self.parse_comments, meta={'item': item, 'source_url': comments_url}, priority=30)
+            # 抓取转发信息
+            reposts_url = f"https://weibo.com/ajax/statuses/repostTimeline?id={mid}&page=1&moduleID=feed&count=10"
+            yield Request(reposts_url, callback=self.parse_reposts, meta={'item': item, 'page_num': 1, 'mid': mid}, priority=30)
+            # 构造点赞信息的请求
+             attitudes_url = f"https://weibo.com/ajax/statuses/attitudes?id={mid}&page=1&count=20"
+            yield Request(attitudes_url, callback=self.parse_attitudes, meta={'item': item, 'page_num': 1, 'mid': mid}, priority=30)
+        else:
+            self.logger.warning(f"No 'mid' found in tweet data. URL: {response.url}")
 
-        # 抓取转发信息
-        reposts_url = f"https://weibo.com/ajax/statuses/repostTimeline?id={mid}&page=1&moduleID=feed&count=10"
-        yield Request(reposts_url, callback=self.parse_reposts, meta={'item': item, 'page_num': 1, 'mid': mid}, priority=30)
-
-        # 抓取点赞信息
-        attitudes_url = f"https://weibo.com/ajax/statuses/attitudes?id={mid}&page=1&count=20"
-        yield Request(attitudes_url, callback=self.parse_attitudes, meta={'item': item, 'page_num': 1, 'mid': mid}, priority=30)
+        yield item
 
     def parse_comments(self, response):
         """
