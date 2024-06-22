@@ -80,7 +80,7 @@ class TweetSpiderByKeyword(Spider):
 
         # 获取微博的唯一标识符 mid
         mid = data.get('mid')  # 假设微博数据中的唯一标识符为 'mid'
-            if mid:
+        if mid:
             # 构造评论信息的请求
             comments_url = f"https://weibo.com/ajax/statuses/buildComments?is_reload=1&id={mid}&is_show_bulletin=2&is_mix=0&count=20"
             yield Request(comments_url, callback=self.parse_comments, meta={'item': item, 'source_url': comments_url}, priority=30)
