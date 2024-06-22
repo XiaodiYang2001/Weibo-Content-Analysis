@@ -11,6 +11,7 @@ from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
 from spiders.tweet_by_user_id import TweetSpiderByUserID
 from spiders.tweet_by_keyword import TweetSpiderByKeyword
+from spiders.keyword_comment_repost import TweetSpiderByKeyword
 from spiders.tweet_by_tweet_id import TweetSpiderByTweetID
 from spiders.comment import CommentSpider
 from spiders.follower import FollowerSpider
@@ -32,6 +33,7 @@ if __name__ == '__main__':
         'tweet_by_tweet_id': TweetSpiderByTweetID,
         'tweet_by_user_id': TweetSpiderByUserID,
         'tweet_by_keyword': TweetSpiderByKeyword,
+        'keyword_comment_repost': TweetSpiderByKeyword,
     }
     process.crawl(mode_to_spider[mode])
     # the script will block here until the crawling is finished
