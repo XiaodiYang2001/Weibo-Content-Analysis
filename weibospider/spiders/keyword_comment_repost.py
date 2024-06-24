@@ -136,7 +136,7 @@ class TweetSpiderByKeyword(Spider):
             url = f"https://weibo.com/ajax/statuses/repostTimeline?id={mid}&page={page_num}&moduleID=feed&count=10"
             yield Request(url, callback=self.parse, meta={'page_num': page_num, 'mid': mid})
 
-    def parse_attitudes(self, response **kwargs):
+    def parse_attitudes(self, response, **kwargs):
         """
         解析点赞用户
         """
