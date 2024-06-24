@@ -2,8 +2,7 @@ import datetime
 import json
 import re
 from scrapy import Spider, Request
-from spiders.common import parse_tweet_info, parse_long_tweet
-
+from spiders.common import parse_tweet_info, parse_long_tweet, url_to_mid, parse_time, parse_user_info
 
 class TweetSpiderByKeyword(Spider):
     """
@@ -16,12 +15,9 @@ class TweetSpiderByKeyword(Spider):
         """
         爬虫入口
         """
-        # 这里keywords可替换成实际待采集的数据
         keywords = ['陈铭']
-        # 这里的时间可替换成实际需要的时间段
         start_time = datetime.datetime(year=2024, month=3, day=24, hour=21)
         end_time = datetime.datetime(year=2024, month=3, day=29, hour=21)
-        # 是否按照小时进行切分，数据量更大; 对于非热门关键词**不需要**按照小时切分
         is_split_by_hour = True
         for keyword in keywords:
             if not is_split_by_hour:
@@ -38,21 +34,7 @@ class TweetSpiderByKeyword(Spider):
                     yield Request(url, callback=self.parse, meta={'keyword': keyword})
                     time_cur = time_cur + datetime.timedelta(hours=1)
 
-        # 评论
-        for tweet_id in tweet_ids:
-            mid = url_to_mid(tweet_id)
-            url_comment = f"https://weibo.com/ajax/statuses/buildComments?" \
-                  f"is_reload=1&id={mid}&is_show_bulletin=2&is_mix=0&count=20"
-            yield Request(url_comment, callback=self.parse, meta={'source_url': url})
-        #转发
-            url_repost = f"https://weibo.com/ajax/statuses/repostTimeline?id={mid}&page=1&moduleID=feed&count=10"
-            yield Request(url_repost, callback=self.parse, meta={'page_num': 1, 'mid': mid})
-        #点赞
-            url_attitudes = f"https://weibo.com/ajax/statuses/attitudes?id={mid}&page=1&count=20"
-            yield Request(url_attitudes, callback=self.parse, meta={'page_num': 1, 'mid': mid})
-
-
-    def parse_tweet1(self, response, **kwargs):
+    def parse(self, response, **kwargs):
         """
         网页解析
         """
@@ -65,29 +47,38 @@ class TweetSpiderByKeyword(Spider):
             tweet_ids = re.findall(r'weibo\.com/\d+/(.+?)\?refer_flag=1001030103_" ', tweets_info)
             for tweet_id in tweet_ids:
                 url = f"https://weibo.com/ajax/statuses/show?id={tweet_id}"
-                yield Request(url, callback=self.parse_tweet, meta=response.meta, priority=10)
+                yield Request(url, callback=self.parse_tweet, meta={'keyword': response.meta['keyword'], 'tweet_id': tweet_id}, priority=10)
         next_page = re.search('<a href="(.*?)" class="next">下一页</a>', html)
         if next_page:
             url = "https://s.weibo.com" + next_page.group(1)
             yield Request(url, callback=self.parse, meta=response.meta)
 
-    @staticmethod
-    def parse_tweet2(response):
+    def parse_tweet(self, response):
         """
         解析推文
         """
         data = json.loads(response.text)
         item = parse_tweet_info(data)
         item['keyword'] = response.meta['keyword']
+        tweet_id = response.meta['tweet_id']
         if item['isLongText']:
             url = "https://weibo.com/ajax/statuses/longtext?id=" + item['mblogid']
             yield Request(url, callback=parse_long_tweet, meta={'item': item}, priority=20)
         else:
             yield item
+        
+        # 爬取评论
+        mid = url_to_mid(tweet_id)
+        comment_url = f"https://weibo.com/ajax/statuses/buildComments?is_reload=1&id={mid}&is_show_bulletin=2&is_mix=0&count=20"
+        yield Request(comment_url, callback=self.parse_comments, meta={'source_url': comment_url, 'tweet_id': tweet_id}, priority=20)
+        
+        # 爬取转发内容
+        repost_url = f"https://weibo.com/ajax/statuses/repostTimeline?id={mid}&page=1&moduleID=feed&count=10"
+        yield Request(repost_url, callback=self.parse_reposts, meta={'page_num': 1, 'mid': mid}, priority=20)
 
-    def parse_comment1(self, response, **kwargs):
+    def parse_comments(self, response):
         """
-        评论网页解析
+        解析评论
         """
         data = json.loads(response.text)
         for comment_info in data['data']:
@@ -97,13 +88,13 @@ class TweetSpiderByKeyword(Spider):
             if 'more_info' in comment_info:
                 url = f"https://weibo.com/ajax/statuses/buildComments?is_reload=1&id={comment_info['id']}" \
                       f"&is_show_bulletin=2&is_mix=1&fetch_level=1&max_id=0&count=100"
-                yield Request(url, callback=self.parse, priority=20)
+                yield Request(url, callback=self.parse_comments, priority=20)
         if data.get('max_id', 0) != 0 and 'fetch_level=1' not in response.url:
             url = response.meta['source_url'] + '&max_id=' + str(data['max_id'])
-            yield Request(url, callback=self.parse, meta=response.meta)
+            yield Request(url, callback=self.parse_comments, meta=response.meta)
 
     @staticmethod
-    def parse_comment2(data):
+    def parse_comment(data):
         """
         解析comment
         """
@@ -121,40 +112,21 @@ class TweetSpiderByKeyword(Spider):
                 'user': parse_user_info(data['reply_comment']['user']),
             }
         return item
+    
+    def parse_reposts(self, response):
+    """
+    解析转发内容
+    """
+    data = json.loads(response.text)
+    for tweet in data['data']:
+        item = parse_tweet_info(tweet)
+        yield item
+    if data['data']:
+        mid, page_num = response.meta['mid'], response.meta['page_num']
+        page_num += 1
+        url = f"https://weibo.com/ajax/statuses/repostTimeline?id={mid}&page={page_num}&moduleID=feed&count=10"
+        yield Request(url, callback=self.parse_reposts, meta={'page_num': page_num, 'mid': mid})
 
-    def parse_repost(self, response, **kwargs):
-        """
-        转发网页解析
-        """
-        data = json.loads(response.text)
-        for tweet in data['data']:
-            item = parse_tweet_info(tweet)
-            yield item
-        if data['data']:
-            mid, page_num = response.meta['mid'], response.meta['page_num']
-            page_num += 1
-            url = f"https://weibo.com/ajax/statuses/repostTimeline?id={mid}&page={page_num}&moduleID=feed&count=10"
-            yield Request(url, callback=self.parse, meta={'page_num': page_num, 'mid': mid})
 
-    def parse_attitudes(self, response, **kwargs):
-        """
-        解析点赞用户
-        """
-        data = json.loads(response.text)
-        for tweet in data['data']:
-            item = parse_tweet_info(tweet)
-            yield item
-        if data['data']:
-            mid, page_num = response.meta['mid'], response.meta['page_num']
-            page_num += 1
-            url = f"https://weibo.com/ajax/statuses/attitudes?id={mid}&page=1&count=20"
-            yield Request(url, callback=self.parse, meta={'page_num': page_num, 'mid': mid})
-        
-        #item = response.meta['item']
-        #data = json.loads(response.text)
-        #if 'attitudes' not in item:
-            #item['attitudes'] = []
-        #item['attitudes'].extend([{'user_id': attitude['user']['id'], 'nick_name': attitude['user']['screen_name']} for attitude in data['data']])
-        #yield item
 
 
