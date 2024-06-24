@@ -112,21 +112,19 @@ class TweetSpiderByKeyword(Spider):
                 'user': parse_user_info(data['reply_comment']['user']),
             }
         return item
-    
+        
     def parse_reposts(self, response):
-    """
-    解析转发内容
-    """
-    data = json.loads(response.text)
-    for tweet in data['data']:
-        item = parse_tweet_info(tweet)
-        yield item
-    if data['data']:
-        mid, page_num = response.meta['mid'], response.meta['page_num']
-        page_num += 1
-        url = f"https://weibo.com/ajax/statuses/repostTimeline?id={mid}&page={page_num}&moduleID=feed&count=10"
-        yield Request(url, callback=self.parse_reposts, meta={'page_num': page_num, 'mid': mid})
-
-
+        """
+        解析转发内容
+        """
+        data = json.loads(response.text)
+        for tweet in data['data']:
+            item = parse_tweet_info(tweet)
+            yield item
+        if data['data']:
+            mid, page_num = response.meta['mid'], response.meta['page_num']
+            page_num += 1
+            url = f"https://weibo.com/ajax/statuses/repostTimeline?id={mid}&page={page_num}&moduleID=feed&count=10"
+            yield Request(url, callback=self.parse_reposts, meta={'page_num': page_num, 'mid': mid})
 
 
