@@ -76,7 +76,7 @@ class TweetSpiderByKeyword(Spider):
         repost_url = f"https://weibo.com/ajax/statuses/repostTimeline?id={mid}&page=1&moduleID=feed&count=10"
         yield Request(repost_url, callback=self.parse_reposts, meta={'page_num': 1, 'mid': mid}, priority=20)
 
-    def parse_comments(self, response):
+    def parse_comments(self, response, **kwargs):
         """
         解析评论
         """
@@ -113,7 +113,7 @@ class TweetSpiderByKeyword(Spider):
             }
         return item
         
-    def parse_reposts(self, response):
+    def parse_reposts(self, response, **kwargs):
         """
         解析转发内容
         """
@@ -126,5 +126,3 @@ class TweetSpiderByKeyword(Spider):
             page_num += 1
             url = f"https://weibo.com/ajax/statuses/repostTimeline?id={mid}&page={page_num}&moduleID=feed&count=10"
             yield Request(url, callback=self.parse_reposts, meta={'page_num': page_num, 'mid': mid})
-
-
