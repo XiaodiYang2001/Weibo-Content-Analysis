@@ -79,7 +79,7 @@ class TweetSpiderByKeyword(Spider):
         
         # 爬取点赞用户
         attitude_url = f"https://weibo.com/ajax/statuses/attitude?id={mid}&page=1"
-        yield Request(attitude_url, callback=self.parse_likes, meta={'page_num': 1, 'mid': mid}, priority=20)
+        yield Request(attitude_url, callback=self.parse_attitudes, meta={'page_num': 1, 'mid': mid}, priority=20)
 
     def parse_comments(self, response, **kwargs):
         """
@@ -149,4 +149,4 @@ class TweetSpiderByKeyword(Spider):
             mid, page_num = response.meta['mid'], response.meta['page_num']
             page_num += 1
             url = f"https://weibo.com/ajax/statuses/attitude?id={mid}&page={page_num}"
-            yield Request(url, callback=self.parse_likes, meta={'page_num': page_num, 'mid': mid})
+            yield Request(url, callback=self.parse_attitudes, meta={'page_num': page_num, 'mid': mid})
