@@ -59,6 +59,7 @@ class TweetSpiderByKeyword(Spider):
         """
         data = json.loads(response.text)
         item = parse_tweet_info(data)
+        item['type'] = 'post'
         item['keyword'] = response.meta['keyword']
         tweet_id = response.meta['tweet_id']
         if item['isLongText']:
@@ -99,6 +100,7 @@ class TweetSpiderByKeyword(Spider):
         解析comment
         """
         item = dict()
+        item['type'] = 'comment'
         item['created_at'] = parse_time(data['created_at'])
         item['_id'] = data['id']
         item['like_counts'] = data['like_counts']
@@ -120,6 +122,7 @@ class TweetSpiderByKeyword(Spider):
         data = json.loads(response.text)
         for tweet in data['data']:
             item = parse_tweet_info(tweet)
+            item['type'] = 'repost'
             yield item
         if data['data']:
             mid, page_num = response.meta['mid'], response.meta['page_num']
