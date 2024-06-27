@@ -15,7 +15,7 @@ class TweetSpiderByKeyword(Spider):
         """
         爬虫入口
         """
-        keywords = ['坠落的审判北大', '坠落的审判北大首映', '北大首映', '坠落的审判首映']
+        keywords = ['坠落的审判北大', '坠落的审判北大首映', '北大首映']
         start_time = datetime.datetime(year=2024, month=3, day=24, hour=21)
         end_time = datetime.datetime(year=2024, month=3, day=29, hour=21)
         is_split_by_hour = True
